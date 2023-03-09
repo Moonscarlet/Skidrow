@@ -58,7 +58,7 @@ If @error Then Exit
 Local $siteURL = InputBox("Page", "Enter starting page URL:" & @CRLF & "(change only if you want other pages (2,3,4...etc))", "https://www.skidrowreloaded.com/pc/", Default, 288)
 If @error Then Exit
 
-Local $deleteDuplicates = MsgBox(3+32,"Duplicate Games","Skip duplicate games (same original game URL)?")
+Local $deleteDuplicates = MsgBox(3 + 32, "Duplicate Games", "Skip duplicate games (same original game URL)?")
 If $deleteDuplicates = 6 Then ;yes > skip
 	$deleteDuplicates = True
 ElseIf $deleteDuplicates = 7 Then ;no > keep
@@ -211,7 +211,7 @@ If $deleteDuplicates Then
 	Local $aColumns = [7]
 	$file.Activesheet.Range("A1:K" & $iLastRow).RemoveDuplicates($aColumns)
 	$iLastRow = $file.Activesheet.Range("A1000000").End(-4162).Row
-	$gameResults = $iLastRow-1;cause header
+	$gameResults = $iLastRow - 1 ;cause header
 EndIf
 
 _Excel_BookSaveAs($file, @ScriptDir & "\Results\" & @HOUR & "-" & @MIN & "-" & @SEC & " " & @MDAY & "-" & @MON & "-" & @YEAR & ".xlsx")
@@ -226,4 +226,4 @@ ProgressOff()
 MsgBox(262144 + 32, "Done!", $gameResults & " games finished in " & Round(Floor(TimerDiff($timer)) / 1000, 2) & " seconds!")
 #EndRegion Finishing
 
-ShellExecute(@ScriptDir&"\page.html")
+ShellExecute(@ScriptDir & "\page.html")
