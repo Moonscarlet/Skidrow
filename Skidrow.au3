@@ -226,4 +226,5 @@ ProgressOff()
 MsgBox(262144 + 32, "Done!", $gameResults & " games finished in " & Round(Floor(TimerDiff($timer)) / 1000, 2) & " seconds!")
 #EndRegion Finishing
 
+FileDelete(@ScriptDir&"\files\chrome.log")
 ShellExecute(@ScriptDir & "\page.html")
