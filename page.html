@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>My Webpage</title>
+  <style>
+    body {
+        color: #d3d3d3;
+        font-family: Verdana;
+		background-image: url('files/bg.jpg');
+    }
+    table {
+        border-collapse: collapse;
+    }
+    td {
+        border-style: groove;
+        border-width: 3px;
+        border-color: rgba(211, 211, 211, 0.1);
+        padding: 2px;
+		text-align: center;
+    }
+</style>
+
+</head>
+
+<body>
+  <!-- Your content goes here -->
+
+  <table>
+<div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+    <input type="file" id="excel-file" style='background-color: lightgray;'/>
+</div>
+
+
+  </table>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+  <script>
+    // Your JavaScript code goes here
+    // Get the file input element
+    var excel_file = document.getElementById("excel-file");
+
+    // Add an event listener for file change
+    excel_file.addEventListener("change", function (event) {
+
+      // Get the selected file
+      var file = event.target.files[0];
+
+      // Check if the file is an excel file
+      if (!["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel"].includes(file.type)) {
+        alert("Please select a valid Excel file.");
+        return;
+      }
+	
+	<!-- excel_file.remove() -->
+	  excel_file.parentElement.remove();
+      // Create a file reader object
+      var reader = new FileReader();
+
+      // Add an event listener for file load
+      reader.onload = function (event) {
+
+	 // Get the file data as binary string
+	var data = event.target.result;
+
+	// Parse the data using SheetJS
+	var workbook = XLSX.read(data, { type: "binary" });
+
+	// Get the first sheet name
+	var sheet_name = workbook.SheetNames[0];
+
+	// Get the first sheet data as JSON array
+	var sheet_data = XLSX.utils.sheet_to_json(workbook.Sheets[sheet_name]);
+
+	// Get the table element
+	var table = document.querySelector("table");
+
+	// Create a table row for the header
+	var header_row = document.createElement("tr");
+
+	// Get the headers from the first row of the sheet data
+	var headers = Object.keys(sheet_data[0]);
+
+	// Loop through the headers and create a table cell for each one
+	for (var i = 0; i < headers.length; i++) {
+	  var header_cell = document.createElement("th");
+	  header_cell.textContent = headers[i];
+	  header_row.appendChild(header_cell);
+	}
+
+	// Add the header row to the table
+	<!-- table.appendChild(header_row); -->
+
+	// Loop through the JSON data and append it as table rows and cells	
+	for (var i = 0; i < sheet_data.length; i++) {
+	  var row = document.createElement("tr");
+	  for (var key in sheet_data[i]) {
+		if (sheet_data[i][key]==sheet_data[i]["URL"]) continue
+		var cell = document.createElement("td");
+
+		// Check if the cell contains a URL
+		var re = /(http(s?):)([/|.|\w|\s|-])*/;
+		if (re.test(sheet_data[i][key])) {
+		  // Check if the URL is an image
+		  var reImg = /(http(s?):)([/|.|\w|\s|-])*\.(?:jpg|gif|png)/;
+		  if (reImg.test(sheet_data[i][key])) {
+			var link = document.createElement("a");
+			link.href = sheet_data[i][key];
+			link.target = "_blank"; // Set the target attribute to open the hyperlink in a new tab
+			var image = document.createElement("img");
+			image.src = sheet_data[i][key];
+			image.alt = "Image";
+			link.appendChild(image);
+			if (sheet_data[i][key]==sheet_data[i]["SS1"] || sheet_data[i][key]==sheet_data[i]["SS2"]) cell.style.width = "30%";
+			if (sheet_data[i][key]==sheet_data[i]["Poster"])  cell.style.width = "10%";
+			cell.appendChild(link);
+			row.appendChild(cell);
+		  } else {
+			// Create a hyperlink for non-image URLs
+			var link = document.createElement("a");
+			link.href = sheet_data[i][key]; // Set the href attribute to your desired URL
+			link.target = "_blank"; // Set the target attribute to open the hyperlink in a new tab
+			// Create an image element for image URLs
+			var img = document.createElement("img");
+			
+			if (link.href.includes("skidrowreloaded.com")) {
+				img.src = "files/skidrow.png"; // Set the source of the image if the URL contains "word1"
+			} else if (link.href.includes("steam")) {
+				img.src = "files/steam.png"; // Set the source of the image if the URL contains "word2"
+			} else if (link.href.includes("youtube")) {
+				img.src = "files/youtube.png"; // Set the source of the image if the URL contains "word2"
+			}else if (link.href.includes("gog")) {
+				img.src = "files/gog.png"; // Set the source of the image if the URL contains "word2"
+			}else {
+				img.src = "files/icon.jpg"; // Set a default source for the image
+			}
+			img.alt = "Icon"; // Set the alt text for the image
+			img.width = 35; // Set the width of the image
+			img.height = 35; // Set the height of the image
+			img.classList.add("exclude"); // Add a class to exclude this image from being resized by CSS
+			link.appendChild(img); // Append the image to the hyperlink
+			cell.appendChild(link); // Append the hyperlink to a table cell
+			row.appendChild(cell); // Append the table cell to a row
+		  }
+		  }else if (sheet_data[i][key]==sheet_data[i]["Title"]){ 
+			let text = document.createTextNode(sheet_data[i][key]);
+			let link = document.createElement("a");
+			link.href = sheet_data[i]["URL"];
+			link.target = "_blank";
+			link.appendChild(text);
+			cell.appendChild(link);	  
+		}else {
+		  // Append text node only if it doesn't contain a URL
+		  if (sheet_data[i][key]==sheet_data[i]["PostDate"] || sheet_data[i][key]==sheet_data[i]["ReleaseDate"]) sheet_data[i][key] = convExcelDate(sheet_data[i][key])
+		  text = document.createTextNode(sheet_data[i][key]);
+		  cell.appendChild(text);
+		}
+		row.appendChild(cell);
+	  }
+	  table.appendChild(row);
+	}
+
+	
+	// Add CSS to resize images and make them fit 3 rows per screen (excluding images with class "exclude")
+		var images = table.querySelectorAll('img:not(.exclude)');
+		for (var i=0; i<images.length; i++) {
+			images[i].style.height='30vh';
+			images[i].style.width = "100%";			
+		}		
+      };
+
+
+
+      // Read the file as binary string
+      reader.readAsBinaryString(file);
+
+    });
+	
+	function convExcelDate (dateSerialNumber){
+		const date = new Date((dateSerialNumber - 25569) * 86400000);
+		const formattedDate = date.toLocaleDateString('en-GB', {
+			day: '2-digit',
+			month: 'short',
+			year: '2-digit'
+		});	
+		return formattedDate;
+	}
+  </script>
+
+</body>
+
+</html>
