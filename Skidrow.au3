@@ -228,8 +228,10 @@ Func _Games()
 		Global $size = _getSize()
 		Global $linkOG = _getOGLink()
 ;~ 		Global $video = StringRegExp($htmlSource, '(?<=")(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+?(?=")', 2)
-		Global $video = StringRegExp($htmlSource, '(?<=")?(www\.)?(youtube\.com|youtu\.?be)\/.+?(?=")', 2)
+;~ 		Global $video = StringRegExp($htmlSource, '(?<=")?(www\.)?(youtube\.com|youtu\.?be)\/.+?(?=")', 2)
+		Global $video = StringRegExp($htmlSource, '(?<=iframe src=")(?:https?:)?\/\/www\.youtube\.com\/[^"]+', 2)
 		$video = @error ? " " : StringReplace($video[0], "embed/", "watch?v=")
+		If StringLeft($video, 2) = "//" Then $video = "https:" & $video
 
 		Global $images = _StringBetween($htmlSource, 'img class="lazy aligncenter" src="', '"', Default, True)
 		Global $images2 = _StringBetween($htmlSource, 'img class="aligncenter" src="', '"', Default, True)
@@ -325,7 +327,7 @@ EndFunc   ;==>_getReleaseDate
 
 Func _getGenre()
 	Local $rd = 0
-	Local $vars = ["Genre: ","Genre: : ","Genr: ","Genrer: ","Gene: ","Gente: ","Genrte: "]
+	Local $vars = ["Genre: ", "Genre: : ", "Genr: ", "Genrer: ", "Gene: ", "Gente: ", "Genrte: "]
 	For $v In $vars
 		$rd = _StringBetween(StringLower($htmlSource), StringLower($v), "<", Default, True)
 		If IsArray($rd) Then
@@ -334,11 +336,11 @@ Func _getGenre()
 		EndIf
 	Next
 	Return $rd
-EndFunc   ;==>_getReleaseDate
+EndFunc   ;==>_getGenre
 
 Func _getSize()
 	Local $rd = 0
-	Local $vars = ["Size: ","Size:"]
+	Local $vars = ["Size: ", "Size:"]
 	For $v In $vars
 		$rd = _StringBetween(StringLower($htmlSource), StringLower($v), "<", Default, True)
 		If IsArray($rd) Then
@@ -347,33 +349,19 @@ Func _getSize()
 		EndIf
 	Next
 	Return $rd
-EndFunc   ;==>_getReleaseDate
+EndFunc   ;==>_getSize
 
 Func _getOGLink()
 	Local $rd = 0
-	Local $vars = ['• <a href="','â€¢ <a href="']
+	Local $vars = ['• <a href="', 'â€¢ <a href="']
 	For $v In $vars
 		$rd = _StringBetween(StringLower($htmlSource), $v, '"', Default, True)
 		If IsArray($rd) Then
 ;~ 			$rd[0] = _StringProper($rd[0])
-			if StringInStr($rd[0],"//") Then Return $rd
+			If StringInStr($rd[0], "//") Then Return $rd
 		EndIf
 	Next
 	Return $rd
-EndFunc   ;==>_getReleaseDate
-
-Func _getImages()
-	Local $rd = 0
-	Local $vars = ['• <a href="','â€¢ <a href="']
-	For $v In $vars
-		$rd = _StringBetween(StringLower($htmlSource), $v, '"', Default, True)
-		If IsArray($rd) Then
-;~ 			$rd[0] = _StringProper($rd[0])
-			if StringInStr($rd[0],"//") Then Return $rd
-		EndIf
-	Next
-	Return $rd
-EndFunc   ;==>_getReleaseDate
-
+EndFunc   ;==>_getOGLink
 
 #EndRegion Handling Variations in Texts
