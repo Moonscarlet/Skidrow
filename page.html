@@ -5,25 +5,36 @@
   <title>My Webpage</title>
   <style>
     body {
-        color: #d3d3d3;
-        font-family: Verdana;
-        background-image: url('files/bg.jpg');
+      color: #d3d3d3;
+      font-family: Verdana;
+      background-image: url('files/bg.jpg');
     }
+
     table {
-        border-collapse: collapse;
+      border-collapse: collapse;
+      width: 100%;
     }
+
     td {
-        border-style: groove;
-        border-width: 3px;
-        border-color: rgba(211, 211, 211, 0.1);
-        padding: 2px;
-        text-align: center;
+      border-style: groove;
+      border-width: 3px;
+      border-color: rgba(211, 211, 211, 0.1);
+      padding: 2px;
+      text-align: center;
     }
-	a {
-        color: #d3d3d3;
-        font-family: Verdana;	
-		text-decoration: none;
-	}	
+
+    a {
+      color: #d3d3d3;
+      font-family: Verdana;
+      text-decoration: none;
+    }
+
+    /* .poster{
+
+    }
+    .screenshot{
+
+    } */
   </style>
 
 </head>
@@ -31,11 +42,14 @@
 <body>
   <!-- Your content goes here -->
 
-  <table>
-    <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
-      <input type="file" id="text-file" accept=".txt" style='background-color: lightgray;' />
-    </div>
-  </table>
+  <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+    <input type="file" id="text-file" accept=".txt" style='background-color: lightgray;' />
+  </div>
+
+  <div style="display: inline-block;">
+    <table>
+    </table>
+  </div>
 
   <script>
     // Your JavaScript code goes here
@@ -71,98 +85,105 @@
         var table = document.querySelector("table");
 
         // Create a table row for the header
-        <!-- var header_row = document.createElement("tr"); -->
+        //var header_row = document.createElement("tr");
 
         // Get the headers from the first row of the text data
-        <!-- var headers = rows[0].split("\t"); -->
+        // var headers = rows[0].split("\t");
 
         // Loop through the headers and create a table cell for each one
-        <!-- for (var i = 0; i < headers.length; i++) { -->
-          <!-- var header_cell = document.createElement("th"); -->
-          <!-- header_cell.textContent = headers[i]; -->
-          <!-- header_row.appendChild(header_cell); -->
-        <!-- } -->
+        // for (var i = 0; i < headers.length; i++) { 
+        //   var header_cell = document.createElement("th"); 
+        //   header_cell.textContent = headers[i];
+        //    header_row.appendChild(header_cell);
+        // }
 
         // Add the header row to the table
-        <!-- table.appendChild(header_row); -->
+        // table.appendChild(header_row);
 
         // Loop through the text data rows and append it as table rows and cells
         for (var i = 1; i < rows.length; i++) {
           var row = document.createElement("tr");
           var cells = rows[i].split("\t");
           for (var j = 0; j < cells.length; j++) {
-			if (cells[j]==cells[5]) continue		  
+            if (cells[j] == cells[5]) continue
             var cell = document.createElement("td");
 
             // Check if the cell contains a URL
             var re = /(http(s?):)([/|.|\w|\s|-])*/;
             if (re.test(cells[j])) {
               // Check if the URL is an image
-		  var reImg = /(http(s?):)([/|.|\w|\s|-])*\.(?:jpg|gif|png)/;
-		  if (reImg.test(cells[j])) {
-			var link = document.createElement("a");
-			link.href = cells[j];
-			link.target = "_blank"; // Set the target attribute to open the hyperlink in a new tab
-			var image = document.createElement("img");
-			image.src = cells[j];
-			image.alt = "Image";
-			link.appendChild(image);
-			if (cells[j]==cells[9] || cells[j]==cells[10]) cell.style.width = "30%";
-			if (cells[j]==cells[8])  cell.style.width = "13%";
-			cell.appendChild(link);
-			row.appendChild(cell);
-		  } else {
-			// Create a hyperlink for non-image URLs
-			var link = document.createElement("a");
-			link.href = cells[j]; // Set the href attribute to your desired URL
-			link.target = "_blank"; // Set the target attribute to open the hyperlink in a new tab
-			// Create an image element for image URLs
-			var img = document.createElement("img");
-			
-			if (link.href.includes("skidrowreloaded.com")) {
-				img.src = "files/skidrow.png"; // Set the source of the image if the URL contains "word1"
-			} else if (link.href.includes("steam")) {
-				img.src = "files/steam.png"; // Set the source of the image if the URL contains "word2"
-			} else if (link.href.includes("youtube")) {
-				img.src = "files/youtube.png"; // Set the source of the image if the URL contains "word2"
-			}else if (link.href.includes("gog")) {
-				img.src = "files/gog.png"; // Set the source of the image if the URL contains "word2"
-			}else {
-				img.src = "files/icon.jpg"; // Set a default source for the image
-			}
-			img.alt = "Icon"; // Set the alt text for the image
-			img.width = 35; // Set the width of the image
-			img.height = 35; // Set the height of the image
-			img.classList.add("exclude"); // Add a class to exclude this image from being resized by CSS
-			link.appendChild(img); // Append the image to the hyperlink
-			cell.appendChild(link); // Append the hyperlink to a table cell
-			row.appendChild(cell); // Append the table cell to a row
-		  }
-		  }else if (cells[j]==cells[0]){ 
-			let text = document.createTextNode(cells[j]);
-			let link = document.createElement("a");
-			link.href = cells[5];
-			link.target = "_blank";
-			link.appendChild(text);
-			cell.appendChild(link);	  
-		}else {
-		  // Append text node only if it doesn't contain a URL
-		  <!-- if (cells[j]==cells[1] || cells[j]==cells[2]) cells[j] = convExcelDate(cells[j]) -->
-		  text = document.createTextNode(cells[j]);
-		  cell.appendChild(text);
-			}
-		row.appendChild(cell);
-	  }
-	  table.appendChild(row);
-	}
+              var reImg = /(http(s?):)([/|.|\w|\s|-])*\.(?:jpg|gif|png)/;
+              if (reImg.test(cells[j])) {
+                var link = document.createElement("a");
+                link.href = cells[j];
+                link.target = "_blank"; // Set the target attribute to open the hyperlink in a new tab
+                var image = document.createElement("img");
+                image.src = cells[j];
+                image.alt = "Image";
+                link.appendChild(image);
+                // if (cells[j]==cells[8])  cell.style.width = "13%";
+                // if (cells[j]==cells[9] || cells[j]==cells[10]) cell.style.width = "30%";
+                if (cells[j] == cells[8]) image.classList.add("poster");//posters
+                if (cells[j] == cells[9] || cells[j] == cells[10]) image.classList.add("screenshot");//ss1 ss2
+                // image.className = "screenshots";
+                cell.appendChild(link);
+                row.appendChild(cell);
+              } else {
+                // Create a hyperlink for non-image URLs
+                var link = document.createElement("a");
+                link.href = cells[j]; // Set the href attribute to your desired URL
+                link.target = "_blank"; // Set the target attribute to open the hyperlink in a new tab
+                // Create an image element for image URLs
+                var img = document.createElement("img");
 
-	
-	// Add CSS to resize images and make them fit 3 rows per screen (excluding images with class "exclude")
-		var images = table.querySelectorAll('img:not(.exclude)');
-		for (var i=0; i<images.length; i++) {
-			images[i].style.height='30vh';
-			images[i].style.width = "100%";
-		}
+                if (link.href.includes("skidrowreloaded.com")) {
+                  img.src = "files/skidrow.png"; // Set the source of the image if the URL contains "word1"
+                } else if (link.href.includes("steam")) {
+                  img.src = "files/steam.png"; // Set the source of the image if the URL contains "word2"
+                } else if (link.href.includes("youtube")) {
+                  img.src = "files/youtube.png"; // Set the source of the image if the URL contains "word2"
+                } else if (link.href.includes("gog")) {
+                  img.src = "files/gog.png"; // Set the source of the image if the URL contains "word2"
+                } else {
+                  img.src = "files/icon.jpg"; // Set a default source for the image
+                }
+                img.alt = "Icon"; // Set the alt text for the image
+                img.width = 35; // Set the width of the image
+                img.height = 35; // Set the height of the image
+                img.classList.add("exclude"); // Add a class to exclude this image from being resized by CSS
+                link.appendChild(img); // Append the image to the hyperlink
+                cell.appendChild(link); // Append the hyperlink to a table cell
+                row.appendChild(cell); // Append the table cell to a row
+              }
+            } else if (cells[j] == cells[0]) {
+              let text = document.createTextNode(cells[j]);
+              let link = document.createElement("a");
+              link.href = cells[5];
+              link.target = "_blank";
+              link.appendChild(text);
+              cell.appendChild(link);
+            } else {
+              // Append text node only if it doesn't contain a URL
+              text = document.createTextNode(cells[j]);
+              cell.appendChild(text);
+            }
+            row.appendChild(cell);
+          }
+          table.appendChild(row);
+        }
+
+
+        // Add CSS to resize images and make them fit 3 rows per screen (excluding images with class "exclude")
+        var posters = table.querySelectorAll('img.poster:not(.exclude)');
+        for (var i = 0; i < posters.length; i++) {
+          posters[i].style.height = '38vh';
+          posters[i].style.width = "13vw";
+        }
+        var screenshots = table.querySelectorAll('img.screenshot:not(.exclude)');
+        for (var i = 0; i < screenshots.length; i++) {
+          screenshots[i].style.height = '38vh';
+          screenshots[i].style.width = "30vw";
+        }
       };
 
 
@@ -171,7 +192,7 @@
       reader.readAsBinaryString(file);
 
     });
-	
+
   </script>
 
 </body>
