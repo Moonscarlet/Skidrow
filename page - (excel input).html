@@ -7,7 +7,7 @@
     body {
         color: #d3d3d3;
         font-family: Verdana;
-        background-image: url('files/bg.jpg');
+		background-image: url('files/bg.jpg');
     }
     table {
         border-collapse: collapse;
@@ -17,14 +17,9 @@
         border-width: 3px;
         border-color: rgba(211, 211, 211, 0.1);
         padding: 2px;
-        text-align: center;
+		text-align: center;
     }
-	a {
-        color: #d3d3d3;
-        font-family: Verdana;	
-		text-decoration: none;
-	}	
-  </style>
+</style>
 
 </head>
 
@@ -32,89 +27,99 @@
   <!-- Your content goes here -->
 
   <table>
-    <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
-      <input type="file" id="text-file" accept=".txt" style='background-color: lightgray;' />
-    </div>
+<div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+    <input type="file" id="excel-file" style='background-color: lightgray;'/>
+</div>
+
+
   </table>
 
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
   <script>
     // Your JavaScript code goes here
     // Get the file input element
-    var text_file = document.getElementById("text-file");
+    var excel_file = document.getElementById("excel-file");
 
     // Add an event listener for file change
-    text_file.addEventListener("change", function (event) {
+    excel_file.addEventListener("change", function (event) {
 
       // Get the selected file
       var file = event.target.files[0];
 
-      // Check if the file is a text file
-      if (file.type !== "text/plain") {
-        alert("Please select a valid text file.");
+      // Check if the file is an excel file
+      if (!["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel"].includes(file.type)) {
+        alert("Please select a valid Excel file.");
         return;
       }
-
-      text_file.parentElement.remove();
+	
+	<!-- excel_file.remove() -->
+	  excel_file.parentElement.remove();
       // Create a file reader object
       var reader = new FileReader();
 
       // Add an event listener for file load
       reader.onload = function (event) {
 
-        // Get the file data as text string
-        var data = event.target.result;
+	 // Get the file data as binary string
+	var data = event.target.result;
 
-        // Split the text data using new line character
-        var rows = data.split(/\r?\n/);
+	// Parse the data using SheetJS
+	var workbook = XLSX.read(data, { type: "binary" });
 
-        // Get the table element
-        var table = document.querySelector("table");
+	// Get the first sheet name
+	var sheet_name = workbook.SheetNames[0];
 
-        // Create a table row for the header
-        <!-- var header_row = document.createElement("tr"); -->
+	// Get the first sheet data as JSON array
+	var sheet_data = XLSX.utils.sheet_to_json(workbook.Sheets[sheet_name]);
 
-        // Get the headers from the first row of the text data
-        <!-- var headers = rows[0].split("\t"); -->
+	// Get the table element
+	var table = document.querySelector("table");
 
-        // Loop through the headers and create a table cell for each one
-        <!-- for (var i = 0; i < headers.length; i++) { -->
-          <!-- var header_cell = document.createElement("th"); -->
-          <!-- header_cell.textContent = headers[i]; -->
-          <!-- header_row.appendChild(header_cell); -->
-        <!-- } -->
+	// Create a table row for the header
+	var header_row = document.createElement("tr");
 
-        // Add the header row to the table
-        <!-- table.appendChild(header_row); -->
+	// Get the headers from the first row of the sheet data
+	var headers = Object.keys(sheet_data[0]);
 
-        // Loop through the text data rows and append it as table rows and cells
-        for (var i = 1; i < rows.length; i++) {
-          var row = document.createElement("tr");
-          var cells = rows[i].split("\t");
-          for (var j = 0; j < cells.length; j++) {
-			if (cells[j]==cells[5]) continue		  
-            var cell = document.createElement("td");
+	// Loop through the headers and create a table cell for each one
+	for (var i = 0; i < headers.length; i++) {
+	  var header_cell = document.createElement("th");
+	  header_cell.textContent = headers[i];
+	  header_row.appendChild(header_cell);
+	}
 
-            // Check if the cell contains a URL
-            var re = /(http(s?):)([/|.|\w|\s|-])*/;
-            if (re.test(cells[j])) {
-              // Check if the URL is an image
+	// Add the header row to the table
+	<!-- table.appendChild(header_row); -->
+
+	// Loop through the JSON data and append it as table rows and cells	
+	for (var i = 0; i < sheet_data.length; i++) {
+	  var row = document.createElement("tr");
+	  for (var key in sheet_data[i]) {
+		if (sheet_data[i][key]==sheet_data[i]["URL"]) continue
+		var cell = document.createElement("td");
+
+		// Check if the cell contains a URL
+		var re = /(http(s?):)([/|.|\w|\s|-])*/;
+		if (re.test(sheet_data[i][key])) {
+		  // Check if the URL is an image
 		  var reImg = /(http(s?):)([/|.|\w|\s|-])*\.(?:jpg|gif|png)/;
-		  if (reImg.test(cells[j])) {
+		  if (reImg.test(sheet_data[i][key])) {
 			var link = document.createElement("a");
-			link.href = cells[j];
+			link.href = sheet_data[i][key];
 			link.target = "_blank"; // Set the target attribute to open the hyperlink in a new tab
 			var image = document.createElement("img");
-			image.src = cells[j];
+			image.src = sheet_data[i][key];
 			image.alt = "Image";
 			link.appendChild(image);
-			if (cells[j]==cells[9] || cells[j]==cells[10]) cell.style.width = "30%";
-			if (cells[j]==cells[8])  cell.style.width = "13%";
+			if (sheet_data[i][key]==sheet_data[i]["SS1"] || sheet_data[i][key]==sheet_data[i]["SS2"]) cell.style.width = "30%";
+			if (sheet_data[i][key]==sheet_data[i]["Poster"])  cell.style.width = "10%";
 			cell.appendChild(link);
 			row.appendChild(cell);
 		  } else {
 			// Create a hyperlink for non-image URLs
 			var link = document.createElement("a");
-			link.href = cells[j]; // Set the href attribute to your desired URL
+			link.href = sheet_data[i][key]; // Set the href attribute to your desired URL
 			link.target = "_blank"; // Set the target attribute to open the hyperlink in a new tab
 			// Create an image element for image URLs
 			var img = document.createElement("img");
@@ -138,19 +143,19 @@
 			cell.appendChild(link); // Append the hyperlink to a table cell
 			row.appendChild(cell); // Append the table cell to a row
 		  }
-		  }else if (cells[j]==cells[0]){ 
-			let text = document.createTextNode(cells[j]);
+		  }else if (sheet_data[i][key]==sheet_data[i]["Title"]){ 
+			let text = document.createTextNode(sheet_data[i][key]);
 			let link = document.createElement("a");
-			link.href = cells[5];
+			link.href = sheet_data[i]["URL"];
 			link.target = "_blank";
 			link.appendChild(text);
 			cell.appendChild(link);	  
 		}else {
 		  // Append text node only if it doesn't contain a URL
-		  <!-- if (cells[j]==cells[1] || cells[j]==cells[2]) cells[j] = convExcelDate(cells[j]) -->
-		  text = document.createTextNode(cells[j]);
+		  if (sheet_data[i][key]==sheet_data[i]["PostDate"] || sheet_data[i][key]==sheet_data[i]["ReleaseDate"]) sheet_data[i][key] = convExcelDate(sheet_data[i][key])
+		  text = document.createTextNode(sheet_data[i][key]);
 		  cell.appendChild(text);
-			}
+		}
 		row.appendChild(cell);
 	  }
 	  table.appendChild(row);
@@ -172,6 +177,15 @@
 
     });
 	
+	function convExcelDate (dateSerialNumber){
+		const date = new Date((dateSerialNumber - 25569) * 86400000);
+		const formattedDate = date.toLocaleDateString('en-GB', {
+			day: '2-digit',
+			month: 'short',
+			year: '2-digit'
+		});	
+		return formattedDate;
+	}
   </script>
 
 </body>

@@ -100,6 +100,8 @@ Local $timer = TimerInit()
 Local $aGames[0][3], $aGamesResult[0][11]
 _ArrayAdd($aGames, "Title|URL|PostDate")
 _ArrayAdd($aGamesResult, "Title|PostDate|ReleaseDate|Genre|Size|URL|OGLink|Video|Poster|SS1|SS2")
+Local $outputTxtFile = @ScriptDir & "\Results\" & @MDAY & "-" & @MON & "-" & @YEAR & " " & @HOUR & "-" & @MIN & "-" & @SEC & ".txt"
+FileWriteLine($outputTxtFile, "Title" & @TAB & "PostDate" & @TAB & "ReleaseDate" & @TAB & "Genre" & @TAB & "Size" & @TAB & "URL" & @TAB & "OGLink" & @TAB & "Video" & @TAB & "Poster" & @TAB & "SS1" & @TAB & "SS2")
 #EndRegion Start
 
 
@@ -185,6 +187,12 @@ For $i = 1 To $gameResults ;UBound($oElements) - 1  	 	0idx is headers
 	$aGamesResult[$i][8] = IsArray($images) ? $images[0] : " " ;poster
 	$aGamesResult[$i][9] = IsArray($images) And UBound($images) > 1 ? $images[1] : " " ;ss1
 	$aGamesResult[$i][10] = IsArray($images) And UBound($images) > 2 ? $images[2] : " " ;ss2
+
+	$output = $aGamesResult[$i][0]
+	For $ss = 1 To 10
+		$output = $output & @TAB & $aGamesResult[$i][$ss]
+	Next
+	FileWriteLine($outputTxtFile, $output)
 Next
 #EndRegion Games
 
@@ -200,22 +208,22 @@ ProcessClose("chromedriver.exe")
 
 
 #Region Excel
-ProgressSet((100 / $steps) * $currentStep, @TAB & @TAB & @TAB & @TAB & @TAB & Round((100 / $steps) * $currentStep, 2) & "%", "Creating and Filling Excel...")
-$currentStep += 1
+;~ ProgressSet((100 / $steps) * $currentStep, @TAB & @TAB & @TAB & @TAB & @TAB & Round((100 / $steps) * $currentStep, 2) & "%", "Creating and Filling Excel...")
+;~ $currentStep += 1
 
-$oExcel = _Excel_Open()
-$file = _Excel_BookNew($oExcel, 1)
-_Excel_RangeWrite($file, Default, $aGamesResult)
-If $deleteDuplicates Then
-	Local $iLastRow = $file.Activesheet.Range("A1000000").End(-4162).Row
-	Local $aColumns = [7]
-	$file.Activesheet.Range("A1:K" & $iLastRow).RemoveDuplicates($aColumns)
-	$iLastRow = $file.Activesheet.Range("A1000000").End(-4162).Row
-	$gameResults = $iLastRow - 1 ;cause header
-EndIf
+;~ $oExcel = _Excel_Open()
+;~ $file = _Excel_BookNew($oExcel, 1)
+;~ _Excel_RangeWrite($file, Default, $aGamesResult)
+;~ If $deleteDuplicates Then
+;~ 	Local $iLastRow = $file.Activesheet.Range("A1000000").End(-4162).Row
+;~ 	Local $aColumns = [7]
+;~ 	$file.Activesheet.Range("A1:K" & $iLastRow).RemoveDuplicates($aColumns)
+;~ 	$iLastRow = $file.Activesheet.Range("A1000000").End(-4162).Row
+;~ 	$gameResults = $iLastRow - 1 ;cause header
+;~ EndIf
 
-_Excel_BookSaveAs($file, @ScriptDir & "\Results\" & @HOUR & "-" & @MIN & "-" & @SEC & " " & @MDAY & "-" & @MON & "-" & @YEAR & ".xlsx")
-$oExcel.DisplayAlerts = True
+;~ _Excel_BookSaveAs($file, $outputTxtFile)
+;~ $oExcel.DisplayAlerts = True
 #EndRegion Excel
 
 
@@ -226,5 +234,5 @@ ProgressOff()
 MsgBox(262144 + 32, "Done!", $gameResults & " games finished in " & Round(Floor(TimerDiff($timer)) / 1000, 2) & " seconds!")
 #EndRegion Finishing
 
-FileDelete(@ScriptDir&"\files\chrome.log")
+FileDelete(@ScriptDir & "\files\chrome.log")
 ShellExecute(@ScriptDir & "\page.html")
