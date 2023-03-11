@@ -12,7 +12,44 @@
 
     table {
       border-collapse: collapse;
+      table-layout: fixed;
       width: 100%;
+      height: 100vh;
+    }
+
+    table tr{
+      height: 10vh;
+    }
+
+    table td:nth-child(1) {
+    width: 90px;
+    }
+    table td:nth-child(2) {
+    width:50px;
+    }
+    table td:nth-child(3) {
+    width: 25px;
+    }
+    table td:nth-child(4) {
+    width:70px;
+    }
+    table td:nth-child(5) {
+    width: 25px;
+    }
+    table td:nth-child(6) {
+    width:25px;
+    }
+    table td:nth-child(7) {
+    width: 25px;
+    }
+    table td:nth-child(8) {
+    width: 8vw;
+    }
+    table td:nth-child(9) {
+    width: 20vw;
+    }
+    table td:nth-child(10) {
+    width: 20vw;
     }
 
     td {
@@ -46,10 +83,11 @@
     <input type="file" id="text-file" accept=".txt" style='background-color: lightgray;' />
   </div>
 
-  <div style="display: inline-block;">
+  <!-- <div style="display: inline-block; width: 100%"> -->
+    <!-- <div style="overflow:hidden"> -->
     <table>
     </table>
-  </div>
+  <!-- </div> -->
 
   <script>
     // Your JavaScript code goes here
@@ -125,7 +163,8 @@
                 // if (cells[j]==cells[9] || cells[j]==cells[10]) cell.style.width = "30%";
                 if (cells[j] == cells[8]) image.classList.add("poster");//posters
                 if (cells[j] == cells[9] || cells[j] == cells[10]) image.classList.add("screenshot");//ss1 ss2
-                // image.className = "screenshots";
+                // cell.style.height = '35vh';
+                // cell.style.width = "10vw";
                 cell.appendChild(link);
                 row.appendChild(cell);
               } else {
@@ -176,13 +215,21 @@
         // Add CSS to resize images and make them fit 3 rows per screen (excluding images with class "exclude")
         var posters = table.querySelectorAll('img.poster:not(.exclude)');
         for (var i = 0; i < posters.length; i++) {
-          posters[i].style.height = '38vh';
-          posters[i].style.width = "13vw";
+          // posters[i].style.height = '35vh';
+          // posters[i].style.width = "10vw";
+          posters[i].style.height = '100%';
+          posters[i].style.width = "100%";
+          // posters[i].parentNode.style.height = '100%';
+          // posters[i].parentNode.style.width = "100%";
         }
         var screenshots = table.querySelectorAll('img.screenshot:not(.exclude)');
         for (var i = 0; i < screenshots.length; i++) {
-          screenshots[i].style.height = '38vh';
-          screenshots[i].style.width = "30vw";
+          // screenshots[i].style.height = '35vh';
+          // screenshots[i].style.width = "30vw";
+          screenshots[i].style.height = '100%';
+          screenshots[i].style.width = "100%";
+          // screenshots[i].parentNode.style.height = '100%';
+          // screenshots[i].parentNode.style.width = "100%";
         }
       };
 
