@@ -260,9 +260,9 @@ Func _Games()
 		$aGamesResult[$i][5] = $aGames[$i][1] ;URL
 		$aGamesResult[$i][6] = IsArray($linkOG) ? $linkOG[0] : " " ;game link in its original site
 		$aGamesResult[$i][7] = $video ;ut gameplay video
-		$aGamesResult[$i][8] = IsArray($images) ? $images[0] : " " ;poster
-		$aGamesResult[$i][9] = IsArray($images) And UBound($images) > 1 ? $images[1] : " " ;ss1
-		$aGamesResult[$i][10] = IsArray($images) And UBound($images) > 2 ? $images[2] : " " ;ss2
+		$aGamesResult[$i][8] = IsArray($images) ? $images[0] : " " ;poster and remove new lines
+		$aGamesResult[$i][9] = IsArray($images) And UBound($images) > 1 ? StringStripWS($images[1], 8) : " " ;ss1 and remove new lines
+		$aGamesResult[$i][10] = IsArray($images) And UBound($images) > 2 ? StringStripWS($images[2], 8) : " " ;ss2 and remove new lines
 
 		If $deleteDuplicates And _ArraySearch($aGamesResult, $aGamesResult[$i][6], Default, Default, Default, Default, Default, 6) >= 0 _
 				And _ArraySearch($aGamesResult, $aGamesResult[$i][6], Default, Default, Default, Default, Default, 6) <> $i Then ;if not found before and not the same one cause its already added
@@ -314,7 +314,7 @@ EndFunc   ;==>_Finishing
 #Region Handling Variations in Texts
 Func _getReleaseDate()
 	Local $rd = 0
-	Local $vars = ["Release Date: ", "Release dte:", "release date date:", "releasee date:", "date de parution :", "release dae:", "releaase date:", "release dated:", "release de:", "release date::", "releas date:", "release date :", "release:"]
+	Local $vars = ["Release dte:", "release date date:", "releasee date:", "date de parution :", "release dae:", "releaase date:", "release dated:", "release de:", "release date::", "releas date:", "release date :", "release:", "Release Date: "]
 	For $v In $vars
 		$rd = _StringBetween(StringLower($htmlSource), StringLower($v), "<", Default, True)
 		If IsArray($rd) Then
@@ -327,7 +327,7 @@ EndFunc   ;==>_getReleaseDate
 
 Func _getGenre()
 	Local $rd = 0
-	Local $vars = ["Genre: ", "Genre: : ", "Genr: ", "Genrer: ", "Gene: ", "Gente: ", "Genrte: "]
+	Local $vars = ["Genre: : ", "Genr: ", "Genrer: ", "Gene: ", "Gente: ", "Genrte: ", "Genre: "]
 	For $v In $vars
 		$rd = _StringBetween(StringLower($htmlSource), StringLower($v), "<", Default, True)
 		If IsArray($rd) Then
@@ -340,7 +340,7 @@ EndFunc   ;==>_getGenre
 
 Func _getSize()
 	Local $rd = 0
-	Local $vars = ["Size: ", "Size:"]
+	Local $vars = ["Size:", "Size: "]
 	For $v In $vars
 		$rd = _StringBetween(StringLower($htmlSource), StringLower($v), "<", Default, True)
 		If IsArray($rd) Then
@@ -358,6 +358,7 @@ Func _getOGLink()
 		$rd = _StringBetween(StringLower($htmlSource), $v, '"', Default, True)
 		If IsArray($rd) Then
 ;~ 			$rd[0] = _StringProper($rd[0])
+			If StringLeft($rd[0], 2) = "//" Then $rd[0] = "https:" & $rd[0]
 			If StringInStr($rd[0], "//") Then Return $rd
 		EndIf
 	Next
