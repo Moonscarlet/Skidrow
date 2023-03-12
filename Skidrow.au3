@@ -299,7 +299,7 @@ Func _Finishing()
 	ProgressOff()
 
 	If $iTotalNumberofGames > 0 Then
-		MsgBox(262144 + 32, "Done!", $iTotalNumberofGames & " games finished in " & Round(Floor(TimerDiff($timer)) / 1000, 2) & " seconds!")
+		MsgBox(262144 + 32, "Done!", $iTotalNumberofGames & " games finished in " & Round(Floor(TimerDiff($timer)) / 1000/60, 2) & " minutes!")
 		ShellExecute(@ScriptDir & "\page.html")
 	Else
 		MsgBox(262144 + 32, "Done!", "No new games found since last time!")
