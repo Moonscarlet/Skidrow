@@ -7,6 +7,7 @@
 #include <Array.au3>
 #include <String.au3>
 #include <File.au3>
+Opt("TrayIconDebug", 1)
 
 TraySetIcon(@ScriptDir & "\files\icon.ico")
 
@@ -32,6 +33,7 @@ EndFunc   ;==>SetupGecko
 
 Func SetupChrome($bHeadless = False)
 ;~ 	_WD_Option('OUTPUTDEBUG', False)
+	$_WD_DEBUG = 0
 	_WD_Option('DRIVERCLOSE', True)
 	_WD_Option('Driver', 'Files\chromedriver.exe')
 	_WD_Option('Port', 9515)
@@ -43,8 +45,7 @@ Func SetupChrome($bHeadless = False)
 	_WD_CapabilitiesAdd('w3c', True)
 	_WD_CapabilitiesAdd('excludeSwitches', 'enable-automation')
 	_WD_CapabilitiesAdd('args', 'disable-notifications')
-;~ 	_WD_CapabilitiesAdd('useAutomationExtension', False)
-;~ 	_WD_CapabilitiesAdd('args', '--load-extension='&@ScriptDir&'\adblock');ADBLOCK
+	_WD_CapabilitiesAdd('args', '--load-extension=' & @ScriptDir & '\files\ublock')
 
 	If $bHeadless Then _WD_CapabilitiesAdd('args', '--headless')
 ;~ 	_WD_CapabilitiesDump(@ScriptLineNumber) ; dump current Capabilities setting to console - only for testing in this demo
@@ -104,7 +105,8 @@ EndFunc   ;==>_Go
 
 #Region Input
 Func _Input()
-	Global $gameResults = InputBox("Results", "How many games do you want? (there is 250 per page)", 250) ; < 250 cause 1 page
+	Global $gamesPerPage = 130
+	Global $gameResults = InputBox("Results", "How many games do you want? (there is " & $gamesPerPage & " per page)", 3900)
 	If @error Then Exit
 	Global $siteURL = InputBox("Page", "Enter starting page URL:" & @CRLF & "(change only if you want other pages (2,3,4...etc))", "https://www.skidrowreloaded.com/pc/", Default, 288)
 	If @error Then Exit
@@ -129,7 +131,7 @@ Func _Input()
 		Exit
 	EndIf
 
-	Global $neededPages = Ceiling($gameResults / 250)
+	Global $neededPages = Ceiling($gameResults / $gamesPerPage)
 EndFunc   ;==>_Input
 #EndRegion Input
 
@@ -147,7 +149,7 @@ EndFunc   ;==>_ProgressBar
 
 #Region Init browser
 Func _InitBrowser()
-	$sCapabilities = SetupChrome(True) ;headless or not
+	$sCapabilities = SetupChrome(False) ;headless or not
 ;~ $sCapabilities = SetupGecko(False)
 	_WD_Startup()
 	_WD_ConsoleVisible(False)
@@ -179,8 +181,8 @@ EndFunc   ;==>_Start
 Func _Pages()
 	For $k = 1 To $neededPages
 		Global $oElements = _WD_FindElement($sSession, $_WD_LOCATOR_ByXPath, "//ul[@id='lcp_instance_1']/li", Default, True)
-		For $i = 0 To 250 - 1 ;UBound($oElements) - 1
-			ProgressSet((100 / $steps) * $currentStep, "Games:" & $i + 1 + (($k - 1) * 250) & "/" & $gameResults & @TAB & @TAB & "Pages:" & $k & "/" & $neededPages & @TAB & @TAB & Round((100 / $steps) * $currentStep, 2) & "%", "Getting Posts Titles and Dates...")
+		For $i = 0 To $gamesPerPage - 1 ;UBound($oElements) - 1
+			ProgressSet((100 / $steps) * $currentStep, "Games:" & $i + 1 + (($k - 1) * $gamesPerPage) & "/" & $gameResults & @TAB & @TAB & "Pages:" & $k & "/" & $neededPages & @TAB & @TAB & Round((100 / $steps) * $currentStep, 2) & "%", "Getting Posts Titles and Dates...")
 			$currentStep += 1
 			Global $title = _WD_ElementAction($sSession, $oElements[$i], 'text') ;title+date
 			Global $postDateMatches = StringRegExp($title, "\b(January|February|March|April|May|June|July|August|September|October|November|December)\s\d{1,2},\s\d{4}\b", 2)
@@ -197,7 +199,7 @@ Func _Pages()
 
 			_ArrayAdd($aGames, $title & "|" & $url & "|" & $postDate)
 			_ArrayAdd($aGamesResult, "")
-			If $i + 1 + (($k - 1) * 250) = $gameResults Then ExitLoop
+			If $i + 1 + (($k - 1) * $gamesPerPage) = $gameResults Then ExitLoop
 		Next
 
 		Global $sDesiredClass = "lcp_nextlink"
@@ -214,9 +216,11 @@ EndFunc   ;==>_Pages
 
 #Region Games
 Func _Games()
+;~ 	_ArrayDisplay($aGames,"$aGames")
+;~ 	_ArrayDisplay($aGamesResult,"$aGamesResult")
 	If $iTotalNumberofGames = 0 Then Return
 	For $i = 1 To $iTotalNumberofGames ;UBound($oElements) - 1  	 	0idx is headers
-		ProgressSet((100 / $steps) * $currentStep, $i & "/" & $iTotalNumberofGames & @TAB & @TAB & @TAB & @TAB & @TAB & Round((100 / $steps) * $currentStep, 2) & "%", "Getting Each Game Details...")
+		ProgressSet((100 / $iTotalNumberofGames) * $currentStep, $i & "/" & $iTotalNumberofGames & @TAB & @TAB & @TAB & @TAB & @TAB & Round((100 / $steps) * $currentStep, 2) & "%", "Getting Each Game Details...")
 		$currentStep += 1
 
 		_WD_Navigate($sSession, $aGames[$i][1])
@@ -225,44 +229,109 @@ Func _Games()
 
 		Global $dateRelease = _getReleaseDate()
 		Global $genre = _getGenre()
-		Global $size = _getSize()
+
+;~ 		Global $size = _getSize()
+		$xpath = "//p[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'size')]"
+		$element = _WD_FindElement($sSession, $_WD_LOCATOR_ByXPath, $xpath)
+		If @error Then
+			$size = " "
+		Else
+			$size = _WD_ElementAction($sSession, $element, 'text')
+			$size = StringRegExp($size, "(?mi)\bSize:\h*(\d+(\.\d+)?(?:\h*MB|\h*GB)).*$", 3)
+			If @error Then
+				$size = " "
+			Else
+				$size = $size[0]
+			EndIf
+		EndIf
+
+
 		Global $linkOG = _getOGLink()
-;~ 		Global $video = StringRegExp($htmlSource, '(?<=")(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+?(?=")', 2)
-;~ 		Global $video = StringRegExp($htmlSource, '(?<=")?(www\.)?(youtube\.com|youtu\.?be)\/.+?(?=")', 2)
+
 		Global $video = StringRegExp($htmlSource, '(?<=iframe src=")(?:https?:)?\/\/www\.youtube\.com\/[^"]+', 2)
 		$video = @error ? " " : StringReplace($video[0], "embed/", "watch?v=")
 		If StringLeft($video, 2) = "//" Then $video = "https:" & $video
 
-		Global $images = _StringBetween($htmlSource, 'img class="lazy aligncenter" src="', '"', Default, True)
-		Global $images2 = _StringBetween($htmlSource, 'img class="aligncenter" src="', '"', Default, True)
-		If IsArray($images) Then
-			_ArrayConcatenate($images, $images2)
-			$images = _ArrayUnique($images, Default, Default, Default, 0)
-		Else
-			$images = $images2
-		EndIf
+		;;;POSTER SS1 SS2
+		While 1
+;~ 			$xpath = "//img[not(@id='fsb_image') and contains(@src, '.jpg')]"
+			$xpath = "//img[not(@id='fsb_image') and contains(@data-lazy-src, '.jpg')]"
+			$screenshotsELEMENTS = _WD_FindElement($sSession, $_WD_LOCATOR_ByXPath, $xpath, Default, True)
+			If UBound($screenshotsELEMENTS) > 1 Then
+				ExitLoop
+			Else
+				ConsoleWrite("REFRESHING " & @CRLF)
+				_WD_Action($sSession, "REFRESH")
 
-		If Not StringInStr($images[0], "www.skidrowreloaded") Then
-			For $img = 0 To UBound($images) - 1
-				If StringInStr($images[$img], "www.skidrowreloaded") Then
-					$poster = $images[$img]
-					_ArrayDelete($images, $img)
-					_ArrayInsert($images, 0, $poster)
-				EndIf
-			Next
-		EndIf
+				$xpath = "//li[@role='tab']//a[text()='SCREENSHOTS']"
+				$element = _WD_FindElement($sSession, $_WD_LOCATOR_ByXPath, $xpath)
+				_WD_ElementAction($sSession, $element, "click")
+				_WD_HighlightElements($sSession, $element)
+				Sleep(2000)
+			EndIf
+		WEnd
+
+		Local $screenshots[0]
+		For $s In $screenshotsELEMENTS
+;~ 			_ArrayAdd($screenshots, _WD_ElementAction($sSession, $s, 'attribute', 'src'))
+			_ArrayAdd($screenshots, _WD_ElementAction($sSession, $s, 'attribute', 'data-lazy-src'))
+		Next
+;~ 		_ArrayDisplay($screenshots)
+		$poster = $screenshots[0]
+		ConsoleWrite('@@ Debug(' & @ScriptLineNumber & ') : $poster = ' & $poster & @CRLF) ;### Debug Console
+		$ss1 = UBound($screenshots) > 1 ? $screenshots[1] : " "
+		ConsoleWrite('@@ Debug(' & @ScriptLineNumber & ') : $ss1 = ' & $ss1 & @CRLF) ;### Debug Console
+		$ss2 = UBound($screenshots) > 2 ? $screenshots[2] : " "
+		ConsoleWrite('@@ Debug(' & @ScriptLineNumber & ') : $ss2 = ' & $ss2 & @CRLF) ;### Debug Console
+
+		;;;;POSTER
+;~ 		$xpath = "//img[not(@id='fsb_image') and contains(@src, '.jpg') and contains(@src, 'skidrow')]"
+;~ 		$element = _WD_FindElement($sSession, $_WD_LOCATOR_ByXPath, $xpath)
+;~ 		$poster = _WD_ElementAction($sSession, $element, 'attribute', 'src') ? _WD_ElementAction($sSession, $element, 'attribute', 'src') : " "
+;~ 		ConsoleWrite('@@ Debug(' & @ScriptLineNumber & ') : $poster = ' & $poster & @CRLF) ;### Debug Console
+
+
+		;;;;SS1
+;~ 		$timerTemp = TimerInit()
+;~ 		$xpath = "(//div//div//div//div//div//div//p//img[not(@id='fsb_image') and contains(@data-lazy-src, '.jpg') and not(contains(@data-lazy-src, 'skidrow'))])[1]"
+;~ 		Do
+;~ 			_WD_LoadWait($sSession)
+;~ 			$element = _WD_WaitElement($sSession, $_WD_LOCATOR_ByXPath, $xpath, 0, 150)
+;~ 			If @error Then
+;~ 				_WD_Action($sSession, "REFRESH")
+;~ 				ConsoleWrite("REFRESHING " & @CRLF)
+;~ 			EndIf
+;~ 		Until $element <> @error Or TimerDiff($timerTemp) > 10000
+;~ 		$ss1 = _WD_ElementAction($sSession, $element, 'attribute', 'data-lazy-src') ? _WD_ElementAction($sSession, $element, 'attribute', 'data-lazy-src') : " "
+;~ 		ConsoleWrite('@@ Debug(' & @ScriptLineNumber & ') : $ss1 = ' & $ss1 & @CRLF) ;### Debug Console
+
+		;;;;;SS2
+;~ 		$timerTemp = TimerInit()
+;~ 		$xpath = "(//div//div//div//div//div//div//p//img[not(@id='fsb_image') and contains(@data-lazy-src, '.jpg') and not(contains(@data-lazy-src, 'skidrow'))])[2]"
+;~ 		Do
+;~ 			_WD_LoadWait($sSession)
+;~ 			$element = _WD_WaitElement($sSession, $_WD_LOCATOR_ByXPath, $xpath, 0, 150)
+;~ 			If @error Then
+;~ 				_WD_Action($sSession, "REFRESH")
+;~ 				ConsoleWrite("REFRESHING " & @CRLF)
+;~ 			EndIf
+;~ 		Until $element <> @error Or TimerDiff($timerTemp) > 10000
+;~ 		$ss2 = _WD_ElementAction($sSession, $element, 'attribute', 'src') ? _WD_ElementAction($sSession, $element, 'attribute', 'src') : " "
+;~ 		ConsoleWrite('@@ Debug(' & @ScriptLineNumber & ') : $ss2 = ' & $ss2 & @CRLF) ;### Debug Console
+
 
 		$aGamesResult[$i][0] = $aGames[$i][0] ;title
 		$aGamesResult[$i][1] = $aGames[$i][2] ;postdate
 		$aGamesResult[$i][2] = IsArray($dateRelease) ? StringReplace($dateRelease[0], ",", "") : " " ;release date 	remove commas
 		$aGamesResult[$i][3] = IsArray($genre) ? $genre[0] : " " ;genre
-		$aGamesResult[$i][4] = IsArray($size) ? $size[0] : " " ;size
+;~ 		$aGamesResult[$i][4] = IsArray($size) ? $size[0] : " " ;size
+		$aGamesResult[$i][4] = $size ;size
 		$aGamesResult[$i][5] = $aGames[$i][1] ;URL
 		$aGamesResult[$i][6] = IsArray($linkOG) ? $linkOG[0] : " " ;game link in its original site
 		$aGamesResult[$i][7] = $video ;ut gameplay video
-		$aGamesResult[$i][8] = IsArray($images) ? $images[0] : " " ;poster and remove new lines
-		$aGamesResult[$i][9] = IsArray($images) And UBound($images) > 1 ? StringStripWS($images[1], 8) : " " ;ss1 and remove new lines
-		$aGamesResult[$i][10] = IsArray($images) And UBound($images) > 2 ? StringStripWS($images[2], 8) : " " ;ss2 and remove new lines
+		$aGamesResult[$i][8] = $poster
+		$aGamesResult[$i][9] = $ss1
+		$aGamesResult[$i][10] = $ss2
 
 		If $deleteDuplicates And _ArraySearch($aGamesResult, $aGamesResult[$i][6], Default, Default, Default, Default, Default, 6) >= 0 _
 				And _ArraySearch($aGamesResult, $aGamesResult[$i][6], Default, Default, Default, Default, Default, 6) <> $i Then ;if not found before and not the same one cause its already added
@@ -299,7 +368,7 @@ Func _Finishing()
 	ProgressOff()
 
 	If $iTotalNumberofGames > 0 Then
-		MsgBox(262144 + 32, "Done!", $iTotalNumberofGames & " games finished in " & Round(Floor(TimerDiff($timer)) / 1000/60, 2) & " minutes!")
+		MsgBox(262144 + 32, "Done!", $iTotalNumberofGames & " games finished in " & Round(Floor(TimerDiff($timer)) / 1000 / 60, 2) & " minutes!")
 		ShellExecute(@ScriptDir & "\page.html")
 	Else
 		MsgBox(262144 + 32, "Done!", "No new games found since last time!")
@@ -314,7 +383,7 @@ EndFunc   ;==>_Finishing
 #Region Handling Variations in Texts
 Func _getReleaseDate()
 	Local $rd = 0
-	Local $vars = ["Release dte:", "release date date:", "releasee date:", "date de parution :", "release dae:", "releaase date:", "release dated:", "release de:", "release date::", "releas date:", "release date :", "release:", "Release Date: "]
+	Local $vars = ["Release dte:", "Rekease date: ", "Reelase date: ", "release date date:", "releasee date:", "date de parution :", "release dae:", "releaase date:", "release dated:", "release de:", "release date::", "releas date:", "release date :", "release:", "Release Date: ", "Release datee: ", "Release date te: ", "release dat: ", "Release date "]
 	For $v In $vars
 		$rd = _StringBetween(StringLower($htmlSource), StringLower($v), "<", Default, True)
 		If IsArray($rd) Then
@@ -327,7 +396,7 @@ EndFunc   ;==>_getReleaseDate
 
 Func _getGenre()
 	Local $rd = 0
-	Local $vars = ["Genre: : ", "Genr: ", "Genrer: ", "Gene: ", "Gente: ", "Genrte: ", "Genre: "]
+	Local $vars = ["Genre: : ", "Genr: ", "Genrer: ", "Gene: ", "Gener: ", "Gente: ", "Genrte: ", "Genre: "]
 	For $v In $vars
 		$rd = _StringBetween(StringLower($htmlSource), StringLower($v), "<", Default, True)
 		If IsArray($rd) Then
